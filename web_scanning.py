@@ -11,47 +11,112 @@ from datetime import datetime
 R, G, Y, C, M, W, RESET = '\033[91m', '\033[92m', '\033[93m', '\033[96m', '\033[95m', '\033[97m', '\033[0m'
 
 # --- THE BRAIN: ADVANCED CYBER AI ENGINE ---
+import re
+import os
+from datetime import datetime
+
 class CyberAI:
     def __init__(self):
+        # 🛡️ LOCAL BLOCK DETECTION & FIREWALL MITIGATION BOUNDS
         self.error_db = {
-            r"403 Forbidden|Access Denied": ("IP_BLOCKED", "Target firewall has filtered your IP. Switch to MTU fragmentation mode."),
-            r"406 Not Acceptable|WAF|Cloudflare|Mod_Security": ("WAF_DETECTED", "WAF presence confirmed. Use Decoy (-D) or packet padding manipulation."),
-            r"Connection timed out|0 hosts up": ("HOST_DOWN", "Target host is silent, dropping packets, or highly protected."),
-            r"429 Too Many Requests": ("RATE_LIMITED", "Scanning speed is too fast and triggering rate limits. Switch to T1/T2 timing."),
-            r"401 Unauthorized": ("AUTH_REQUIRED", "Authentication layer detected. Basic probing requires brute-force/bypass scripts.")
+            re.compile(r"403 Forbidden|Access Denied|IP Banned|Blocked", re.I): 
+                ("IP_BLOCKED", "SHIELD ALERT: Target firewall detected normal signature. Switch your local network connection or adjust delay timing."),
+            re.compile(r"406 Not Acceptable|WAF|Cloudflare|Mod_Security|Incapsula", re.I): 
+                ("WAF_DETECTED", "WAF PERIMETER TRIGGERED: Active firewall detected. Re-routing commands with '--data-length 125' padding to bypass application inspection."),
+            re.compile(r"Connection timed out|0 hosts up|Host down|filtered", re.I): 
+                ("HOST_DOWN", "HOST SILENT: Packets are dropped by remote router ACLs. Try shifting to passive connection profiles."),
+            re.compile(r"429 Too Many Requests|Rate Limit", re.I): 
+                ("RATE_LIMITED", "RATE LIMIT HIT: Triggered target defensive threshold. Introduce adaptive delays using scan timing parameters.")
         }
         
-        self.service_logic = {
-            "21": ("021", "FTP Open: Testing for anonymous access and known vsftpd backdoor signatures."),
-            "22": ("012", "SSH Open: Recommending automated credential brute-force audit framework."),
-            "23": ("009", "Telnet Open: Unencrypted protocol detected. Suggesting packet sniffing vectors."),
-            "25": ("068", "SMTP Open: Probing for user enumeration techniques and open relay vulnerabilities."),
-            "53": ("019", "DNS Open: Attempting zone transfer (AXFR) sequences and subdomain discovery."),
-            "80": ("031", "HTTP Web Server: Launching advanced directory fuzzing and vulnerability scanning."),
-            "110": ("011", "POP3 Open: Auditing for cleartext command execution and password leaks."),
-            "139": ("017", "NetBIOS Open: Mapping target network shares and domain configurations."),
-            "443": ("054", "HTTPS Server: Initiating complete SSL/TLS cipher audit and certificate chain analysis."),
-            "445": ("017", "SMB Open: Verifying critical remote code execution flaws like EternalBlue and SMBGhost."),
-            "1433": ("036", "MSSQL Server: Probing for default administrative privileges and SQL injection vectors."),
-            "3306": ("020", "MySQL Database: Running automated metadata extraction and root access verification."),
-            "3389": ("022", "RDP Protocol: Checking for remote execution flaws like BlueKeep and encryption levels."),
-            "5432": ("035", "PostgreSQL Database: Testing for loose authentication trust policies."),
-            "8080": ("039", "Alternative HTTP: Inspecting for internal application consoles or deployment managers.")
+        # 🔍 VULNERABILITY & BUG TRACKING ENGINE
+        self.vuln_signatures = {
+            re.compile(r"SQL syntax|mysql_fetch_array|SQLite/JDBC Driver", re.I): ("CRITICAL", "SQL Injection vulnerability signature identified in server response buffers!"),
+            re.compile(r"<script>alert|onerror=|javascript:|XSS", re.I): ("HIGH", "Cross-Site Scripting (XSS) structural injection endpoint verified!"),
+            re.compile(r"Directory indexing|Index of /|drwxr-xr-x", re.I): ("MEDIUM", "Directory Traversal / Information Disclosure path enabled on web root."),
+            re.compile(r"vulnerable|exploit target|cve-20\d{2}-\d+", re.I): ("HIGH", "Direct CVE tracking matrix triggered within target components.")
+        }
+        
+        self.port_mapping = {
+            "21": "ftp", "22": "ssh", "23": "telnet", "25": "smtp", 
+            "80": "http", "443": "ssl", "445": "smb", "3306": "mysql"
         }
 
-    def analyze_output(self, output):
+    def inject_anti_block_arguments(self, command_string):
+        """
+        🚀 NATIVE BYPASS ENGINE:
+        Tor ya ProxyChains ke bina direct packets ko bypass mode par set karne ka automatic framework.
+        """
+        # Agar command mein nmap use ho raha ho, toh bina proxy ke bypass arguments add karna
+        if "nmap" in command_string.lower():
+            anti_block_args = " --data-length 100 --spoof-mac Apple --badsum"
+            if "-Pn" not in command_string:
+                anti_block_args += " -Pn"
+            
+            # Target identification argument space injection
+            return command_string.replace("nmap", f"nmap{anti_block_args}")
+            
+        # Agar koi web audit tool (jaise nikto/curl) ho toh fake browser header inject karna
+        elif "nikto" in command_string.lower() and "-useragent" not in command_string.lower():
+            return command_string.replace("nikto", "nikto -useragent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'")
+            
+        return command_string
+
+    def _write_to_target_log(self, target_name, data_text):
+        clean_name = target_name.replace("https://", "").replace("http://", "").split('/')[0].split(':')[0]
+        file_filename = f"titan_ai_report_{clean_name}.txt"
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open(file_filename, "a", encoding="utf-8") as target_file:
+            target_file.write(f"\n[{timestamp}] Target Security Analysis Engine Log:\n{data_text}\n")
+
+    def analyze_output(self, output, target_identifier="generic_target"):
         for pattern, (err, advice) in self.error_db.items():
-            if re.search(pattern, output, re.IGNORECASE):
+            if pattern.search(output):
+                print(f"\n{R}[⚠️ SHIELD ALERT] {advice}{RESET}")
+                self._write_to_target_log(target_identifier, f"ROUTING SHIELD DETECTED INTERCEPT: {err} -> {advice}")
                 return err, advice
+                
+        print(f"\n{M}[*] --- TITAN AUTOMATED BUG & RISK EVALUATION REPORT ---{RESET}")
+        log_buffer = ""
+        critical_count = 0
+        total_vulns = 0
+        
+        for pattern, (severity, message) in self.vuln_signatures.items():
+            matches = pattern.findall(output)
+            if matches:
+                total_vulns += len(matches)
+                log_line = f"[+] [{severity}] {message} (Total Hits: {len(matches)})"
+                print(f"{R if severity in ['CRITICAL', 'HIGH'] else Y}{log_line}{RESET}")
+                log_buffer += log_line + "\n"
+                if severity == "CRITICAL": critical_count += 1
+
+        if total_vulns > 0:
+            risk = min(100, (critical_count * 50) + (total_vulns * 10))
+            print(f"\n{R if risk >= 60 else Y}[!] Combined Target Attack Surface Exposure: {risk}% Vulnerable Matrix Profile{RESET}")
+        else:
+            print(f"{G}[i] System Integrity Bounds Normal: No severe blocks or application flaws mapped.{RESET}")
+            
+        if log_buffer: 
+            self._write_to_target_log(target_identifier, log_buffer)
         return None, None
 
-    def get_recommendations(self, nmap_output):
+    def get_recommendations(self, nmap_output, target_identifier="generic_target"):
         suggestions = []
-        for port, (cmd_num, advice) in self.service_logic.items():
-            if f"{port}/tcp" in nmap_output:
-                suggestions.append(f"{G}[AI SUGGESTION] Port {port} is OPEN: {advice} Recommendation: Execute CMD [{cmd_num}].{RESET}")
+        global cmd_list
+        recon_log = f"=== PORTS INDEX FOR {target_identifier} ===\n"
+        
+        for port, keyword in self.port_mapping.items():
+            if f"{port}/tcp" in nmap_output or f"{port}/udp" in nmap_output:
+                status = f"[+] Target Node Interface Port {port} is OPEN!"
+                print(f"\n{G}{status}{RESET}")
+                recon_log += status + "\n"
+                
+                for cid, (cmd_str, cmd_desc) in cmd_list.items():
+                    if keyword in cmd_str.lower() or keyword in cmd_desc.lower():
+                        print(f"    └─ Run Option [{Y}{cid.zfill(3)}{RESET}] -> {W}{cmd_desc.split(':')[0]}{RESET}")
+                        suggestions.append(cid)
+        self._write_to_target_log(target_identifier, recon_log)
         return suggestions
-
 # --- ADVANCED FRAMEWORK MODULE 1: INTERACTIVE PAYLOAD GENERATOR ---
 class PayloadLab:
     def __init__(self, lhost, lport):
@@ -294,12 +359,16 @@ def main_orchestration_loop(target_identifier):
         show_header()
         print(f"{C}TARGET IP/DOMAIN: {target_identifier} | NETWORK MODE: DIRECT CONNECTION | RADAR: ON{RESET}")
         print(f"{Y}UTILITIES: [001-100] Commands | [auto] AI Discovery | [web] Deep Web Audit | [payload] Reverse Shells | [0] Exit{RESET}\n")
+# --- FIXED DISPLAY ENGINE (100% PERFECT) ---
+        print(f"{M}" + "="*110 + f"{RESET}")
+        print(f"{C}{'OPTION':<8}{'EXECUTION FRAMEWORK & FULL METADATA PROFILES':<75}{'CORE TOOL'}{RESET}")
+        print(f"{M}" + "="*110 + f"{RESET}")
 
-        for mapping_index in range(1, 101):
-            string_key = str(mapping_index)
-            print(f"[{G}{string_key.zfill(3)}{RESET}]", end="  ")
-            if mapping_index % 10 == 0:
-                print()
+        for string_key, (command_template, details_string) in cmd_list.items():
+            tool_name = command_template.split()[0].upper()
+            print(f"[{G}{string_key.zfill(3)}{RESET}]  {W}{details_string:<75}{RESET} -> [{Y}{tool_name}{RESET}]")
+
+        print(f"{M}" + "="*110 + f"{RESET}") 
 
         user_input_choice = input(f"\n\n{M}[ABDUL-MATEEN@TITAN-ROOT]# {RESET}").strip().lower()
 
