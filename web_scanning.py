@@ -154,10 +154,13 @@ class WebTitan:
 class ReportManager:
     def __init__(self, target):
         self.target = target
-        self.filename = f"titan_report_{target.replace('.', '_')}.json"
-        self.log_file = f"titan_history_{target.replace('.', '_')}.txt"
+        
+        # 🛡️ URL Sanitizer Matrix for Safe Linux File Creation
+        clean_name = target.replace("https://", "").replace("http://", "").replace("/", "_").replace(".", "_")
+        
+        self.filename = f"titan_report_{clean_name}.json"
+        self.log_file = f"titan_history_{clean_name}.txt"
         self.report_structure = {"target_host": target, "generated_at": str(datetime.now()), "vulnerability_records": []}
-
     def append_scan_record(self, execution_cmd, raw_output):
         self.report_structure["vulnerability_records"].append({
             "timestamp": str(datetime.now()),
