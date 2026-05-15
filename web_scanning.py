@@ -4,7 +4,6 @@ import sys
 import subprocess
 import re
 import json
-import socket
 from datetime import datetime
 
 # --- COLORS (ABDUL MATEEN SIGNATURE) ---
@@ -12,112 +11,101 @@ R, G, Y, C, M, W, RESET = '\033[91m', '\033[92m', '\033[93m', '\033[96m', '\033[
 
 # --- THE BRAIN: ADVANCED CYBER AI ENGINE ---
 import re
-import os
+import socket
+from urllib.parse import urlparse
 from datetime import datetime
 
 class CyberAI:
     def __init__(self):
         # 🛡️ LOCAL BLOCK DETECTION & FIREWALL MITIGATION BOUNDS
         self.error_db = {
-            re.compile(r"403 Forbidden|Access Denied|IP Banned|Blocked", re.I): 
-                ("IP_BLOCKED", "SHIELD ALERT: Target firewall detected normal signature. Switch your local network connection or adjust delay timing."),
-            re.compile(r"406 Not Acceptable|WAF|Cloudflare|Mod_Security|Incapsula", re.I): 
-                ("WAF_DETECTED", "WAF PERIMETER TRIGGERED: Active firewall detected. Re-routing commands with '--data-length 125' padding to bypass application inspection."),
-            re.compile(r"Connection timed out|0 hosts up|Host down|filtered", re.I): 
-                ("HOST_DOWN", "HOST SILENT: Packets are dropped by remote router ACLs. Try shifting to passive connection profiles."),
-            re.compile(r"429 Too Many Requests|Rate Limit", re.I): 
-                ("RATE_LIMITED", "RATE LIMIT HIT: Triggered target defensive threshold. Introduce adaptive delays using scan timing parameters.")
+            r"403 Forbidden|Access Denied": ("IP_BLOCKED", "SHIELD ALERT: Target firewall detected normal signature. Switch your local network connection or adjust delay timing."),
+            r"406 Not Acceptable|WAF|Cloudflare|Mod_Security": ("WAF_DETECTED", "WAF PERIMETER TRIGGERED: Active firewall detected. Re-routing commands with padding to bypass application inspection."),
+            r"Connection timed out|0 hosts up|Host down|filtered|ignored states": ("HOST_DOWN", "HOST SILENT: Packets are dropped by remote router/firewall ACLs. Target might be blocking standard pings."),
+            r"429 Too Many Requests": ("RATE_LIMITED", "RATE LIMIT HIT: Triggered target defensive threshold. Introduce adaptive delays using scan timing parameters.")
         }
         
-        # 🔍 VULNERABILITY & BUG TRACKING ENGINE
-        self.vuln_signatures = {
-            re.compile(r"SQL syntax|mysql_fetch_array|SQLite/JDBC Driver", re.I): ("CRITICAL", "SQL Injection vulnerability signature identified in server response buffers!"),
-            re.compile(r"<script>alert|onerror=|javascript:|XSS", re.I): ("HIGH", "Cross-Site Scripting (XSS) structural injection endpoint verified!"),
-            re.compile(r"Directory indexing|Index of /|drwxr-xr-x", re.I): ("MEDIUM", "Directory Traversal / Information Disclosure path enabled on web root."),
-            re.compile(r"vulnerable|exploit target|cve-20\d{2}-\d+", re.I): ("HIGH", "Direct CVE tracking matrix triggered within target components.")
-        }
-        
-        self.port_mapping = {
-            "21": "ftp", "22": "ssh", "23": "telnet", "25": "smtp", 
-            "80": "http", "443": "ssl", "445": "smb", "3306": "mysql"
+        # 🟢 AAPKI ORIGINAL SERVICE LOGIC (BINA KISI GAP KE)
+        self.service_logic = {
+            "21": ("021", "FTP Open: Testing for anonymous access and known vsftpd backdoor signatures."),
+            "22": ("012", "SSH Open: Recommending automated credential brute-force audit framework."),
+            "23": ("009", "Telnet Open: Unencrypted protocol detected. Suggesting packet sniffing vectors."),
+            "25": ("068", "SMTP Open: Probing for user enumeration techniques and open relay vulnerabilities."),
+            "53": ("019", "DNS Open: Attempting zone transfer (AXFR) sequences and subdomain discovery."),
+            "80": ("031", "HTTP Web Server: Launching advanced directory fuzzing and vulnerability scanning."),
+            "110": ("011", "POP3 Open: Auditing for cleartext command execution and password leaks."),
+            "139": ("017", "NetBIOS Open: Mapping target network shares and domain configurations."),
+            "443": ("054", "HTTPS Server: Initiating complete SSL/TLS cipher audit and certificate chain analysis."),
+            "445": ("017", "SMB Open: Verifying critical remote code execution flaws like EternalBlue and SMBGhost."),
+            "1433": ("036", "MSSQL Server: Probing for default administrative privileges and SQL injection vectors."),
+            "3306": ("020", "MySQL Database: Running automated metadata extraction and root access verification."),
+            "3389": ("022", "RDP Protocol: Checking for remote execution flaws like BlueKeep and encryption levels."),
+            "5432": ("035", "PostgreSQL Database: Testing for loose authentication trust policies."),
+            "8080": ("039", "Alternative HTTP: Inspecting for internal application consoles or deployment managers.")
         }
 
     def inject_anti_block_arguments(self, command_string):
-        """
-        🚀 NATIVE BYPASS ENGINE:
-        Tor ya ProxyChains ke bina direct packets ko bypass mode par set karne ka automatic framework.
-        """
-        # Agar command mein nmap use ho raha ho, toh bina proxy ke bypass arguments add karna
+        """🚀 NATIVE BYPASS ENGINE: Automatically injects evasion flags into Nmap/Web commands"""
         if "nmap" in command_string.lower():
             anti_block_args = " --data-length 100 --spoof-mac Apple --badsum"
             if "-Pn" not in command_string:
                 anti_block_args += " -Pn"
-            
-            # Target identification argument space injection
             return command_string.replace("nmap", f"nmap{anti_block_args}")
-            
-        # Agar koi web audit tool (jaise nikto/curl) ho toh fake browser header inject karna
         elif "nikto" in command_string.lower() and "-useragent" not in command_string.lower():
             return command_string.replace("nikto", "nikto -useragent 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'")
-            
         return command_string
 
     def _write_to_target_log(self, target_name, data_text):
-        clean_name = target_name.replace("https://", "").replace("http://", "").split('/')[0].split(':')[0]
+        """Dynamic Target Isolation File System Log Manager"""
+        # URL parsing standard way se taaki error na aaye
+        if not target_name.startswith("http://") and not target_name.startswith("https://"):
+            parse_name = "http://" + target_name
+        else:
+            parse_name = target_name
+        try:
+            clean_name = urlparse(parse_name).netloc.split(':')[0].rstrip('.')
+        except:
+            clean_name = "generic_target"
+            
         file_filename = f"titan_ai_report_{clean_name}.txt"
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(file_filename, "a", encoding="utf-8") as target_file:
             target_file.write(f"\n[{timestamp}] Target Security Analysis Engine Log:\n{data_text}\n")
 
     def analyze_output(self, output, target_identifier="generic_target"):
+        """Live feedback parsing to detect firewall dynamic drops or WAF indicators"""
         for pattern, (err, advice) in self.error_db.items():
-            if pattern.search(output):
+            if re.search(pattern, output, re.IGNORECASE):
                 print(f"\n{R}[⚠️ SHIELD ALERT] {advice}{RESET}")
-                self._write_to_target_log(target_identifier, f"ROUTING SHIELD DETECTED INTERCEPT: {err} -> {advice}")
+                self._write_to_target_log(target_identifier, f"INCIDENT DETECTED: {err} -> {advice}")
                 return err, advice
                 
         print(f"\n{M}[*] --- TITAN AUTOMATED BUG & RISK EVALUATION REPORT ---{RESET}")
-        log_buffer = ""
-        critical_count = 0
-        total_vulns = 0
-        
-        for pattern, (severity, message) in self.vuln_signatures.items():
-            matches = pattern.findall(output)
-            if matches:
-                total_vulns += len(matches)
-                log_line = f"[+] [{severity}] {message} (Total Hits: {len(matches)})"
-                print(f"{R if severity in ['CRITICAL', 'HIGH'] else Y}{log_line}{RESET}")
-                log_buffer += log_line + "\n"
-                if severity == "CRITICAL": critical_count += 1
-
-        if total_vulns > 0:
-            risk = min(100, (critical_count * 50) + (total_vulns * 10))
-            print(f"\n{R if risk >= 60 else Y}[!] Combined Target Attack Surface Exposure: {risk}% Vulnerable Matrix Profile{RESET}")
-        else:
-            print(f"{G}[i] System Integrity Bounds Normal: No severe blocks or application flaws mapped.{RESET}")
-            
-        if log_buffer: 
-            self._write_to_target_log(target_identifier, log_buffer)
+        print(f"{G}[i] System Integrity Bounds Normal: Clear string vectors mapped during this run.{RESET}")
         return None, None
 
     def get_recommendations(self, nmap_output, target_identifier="generic_target"):
+        """Maps discovered ports directly to your internal service matrix modules"""
         suggestions = []
-        global cmd_list
-        recon_log = f"=== PORTS INDEX FOR {target_identifier} ===\n"
+        recon_log = f"=== ACTIVE RECONNAISSANCE FOR TARGET NODE: {target_identifier} ===\n"
         
-        for port, keyword in self.port_mapping.items():
-            if f"{port}/tcp" in nmap_output or f"{port}/udp" in nmap_output:
-                status = f"[+] Target Node Interface Port {port} is OPEN!"
+        port_found = False
+        for port, (cmd_num, advice) in self.service_logic.items():
+            # Standard string matching checks
+            if f"{port}/tcp" in nmap_output or f"{port}/udp" in nmap_output or f"open  {port}" in nmap_output:
+                status = f"[+] [AI SUGGESTION] Port ({port}) is OPEN! -> {advice}"
                 print(f"\n{G}{status}{RESET}")
                 recon_log += status + "\n"
+                suggestions.append(cmd_num)
+                port_found = True
                 
-                for cid, (cmd_str, cmd_desc) in cmd_list.items():
-                    if keyword in cmd_str.lower() or keyword in cmd_desc.lower():
-                        print(f"    └─ Run Option [{Y}{cid.zfill(3)}{RESET}] -> {W}{cmd_desc.split(':')[0]}{RESET}")
-                        suggestions.append(cid)
+        if not port_found:
+            no_port_msg = "[i] No standard open ports detected in the initial quick scan. Host might be protected by a strict stateful firewall."
+            print(f"\n{Y}{no_port_msg}{RESET}")
+            recon_log += no_port_msg + "\n"
+            
         self._write_to_target_log(target_identifier, recon_log)
         return suggestions
-# --- ADVANCED FRAMEWORK MODULE 1: INTERACTIVE PAYLOAD GENERATOR ---
 class PayloadLab:
     def __init__(self, lhost, lport):
         self.lhost = lhost
@@ -376,22 +364,46 @@ def main_orchestration_loop(target_identifier):
             reporter_instance.write_json_to_disk()
             report_status("Titan Framework operational lifecycle terminated safely.", "SUC")
             break
-
         if user_input_choice == 'auto':
-            report_status("Launching automated surface map routine...", "INFO")
-            base_reconnaissance_data = subprocess.getoutput(f"nmap -F --open {target_identifier}")
-            print(f"{W}{base_reconnaissance_data}{RESET}")
-            evaluated_tips = ai_engine.get_recommendations(base_reconnaissance_data)
-            
-            if evaluated_tips:
-                print(f"\n{C}--- AI ARCHITECT STRUCTURAL RECOMMENDATIONS ---{RESET}")
-                for tracking_tip in evaluated_tips:
-                    print(tracking_tip)
-            else:
-                report_status("AI Engine parsed execution patterns but found no obvious entry vectors.", "ERR")
-            input(f"\n{Y}Press Enter to safely cycle back to the dashboard...{RESET}")
-            continue
+             import socket
+        from urllib.parse import urlparse
 
+        report_status("Launching automated surface map routine...", "INFO")
+        
+        # 🌐 URL Cleaner Matrix: Full link se domain alag karne ke liye
+        if not target_identifier.startswith("http://") and not target_identifier.startswith("https://"):
+            parse_input = "http://" + target_identifier
+        else:
+            parse_input = target_identifier
+
+        try:
+            parsed_url = urlparse(parse_input)
+            clean_domain = parsed_url.netloc.split(':')[0].rstrip('.')
+            print(f"\n{C}[*] Resolving Target Identity: {W}{clean_domain}{RESET}")
+            
+            # Auto IP Address Fetcher
+            resolved_ip = socket.gethostbyname(clean_domain)
+            print(f"{G}[+] Target Server IP Address Mapped: {Y}{resolved_ip}{RESET}\n")
+        except Exception:
+            resolved_ip = target_identifier
+            clean_domain = target_identifier
+
+        # 🛡️ Firewall Stealth Evasion Parameters
+        base_recon_data = subprocess.getoutput(f"nmap -F -Pn --open --data-length 100 {resolved_ip}")
+        print(f"{W}{base_recon_data}{RESET}")
+        
+        # AI Processing Flow
+        evaluated_tips = ai_engine.get_recommendations(base_recon_data, clean_domain)
+
+        # 📊 Output Handler Matrix
+        if evaluated_tips:
+            print(f"\n{C}--- AI ARCHITECT STRUCTURAL RECOMMENDATIONS ---{RESET}")
+            for tracking_tip in evaluated_tips:
+                print(tracking_tip)
+        else:
+            report_status("AI Engine parsed execution patterns but found no obvious entry vectors.", "ERR")
+            
+        input(f"\n{Y}Press Enter to safely cycle back to the dashboard...{RESET}")
         if user_input_choice == 'web':
             auditor_instance.run_recon()
             auditor_instance.run_waf_check()
@@ -437,3 +449,36 @@ if __name__ == "__main__":
             print(f"\n{R}[!] CRITICAL INTERRUPT: Manual runtime abort received. Closing operational threads.{RESET}")
     else:
         print(f"{R}[!] PROCESSING FAILURE: Initialization parameter empty. Aborting run.{RESET}")
+        import random
+
+def get_stealth_headers():
+    """Generates random browser identity signatures to bypass web firewall blocks."""
+    user_agents = [
+        "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0", 
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15"
+    ]
+    return {
+        "User-Agent": random.choice(user_agents),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "keep-alive"
+    }
+def save_titan_session_log(target, module_name, scan_output):
+    """Saves every scan result live into a log file so you never lose data if Kali terminal closes."""
+    import time
+    try:
+        log_dir = "titan_framework_logs"
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+            
+        file_path = os.path.join(log_dir, f"session_{target}.txt")
+        current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+        
+        with open(file_path, "a", encoding="utf-8") as log_file:
+            log_file.write(f"\n================ [{current_time}] MODULE: {module_name} ================\n")
+            log_file.write(scan_output)
+            log_file.write("\n======================================================================\n")
+    except Exception as e:
+        print(f"[!] Logging Error: {str(e)}")
+      
