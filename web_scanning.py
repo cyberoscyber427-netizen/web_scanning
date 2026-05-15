@@ -155,27 +155,35 @@ class ReportManager:
     def __init__(self, target):
         self.target = target
         
-        # 🛡️ URL Sanitizer Matrix for Safe Linux File Creation
-        clean_name = target.replace("https://", "").replace("http://", "").replace("/", "_").replace(".", "_")
+        # URL Filter: Taaki file name mein 'https://' ya '/' na aaye
+        clean_name = target.replace("https://", "").replace("http://", "").replace("/", "_").replace(":", "_").replace(".", "_")
         
         self.filename = f"titan_report_{clean_name}.json"
         self.log_file = f"titan_history_{clean_name}.txt"
-        self.report_structure = {"target_host": target, "generated_at": str(datetime.now()), "vulnerability_records": []}
+        
+        # ⏰ Pakka Ilaaj: Direct datetime.now() bina kisi crash ke
+        self.report_structure = {
+            "target_host": target, 
+            "generated_at": str(datetime.now()), 
+            "vulnerability_records": []
+        }
+
     def append_scan_record(self, execution_cmd, raw_output):
+        # ⏰ Direct datetime.now() use kiya hai bina extra prefix ke
         self.report_structure["vulnerability_records"].append({
             "timestamp": str(datetime.now()),
             "executed_command": execution_cmd,
             "data_summary": raw_output[:1000]
         })
+        
         with open(self.log_file, "a") as txt_f:
-            txt_f.write(f"\n--- SCAN TIME: {datetime.now()} ---\nCMD: {execution_cmd}\nOUTPUT:\n{raw_output[:500]}\n")
+            txt_f.write(f"\n--- SCAN TIME: {str(datetime.now())} --- \nCMD: {execution_cmd}\nOUTPUT:\n{raw_output}\n")
 
     def write_json_to_disk(self):
         with open(self.filename, 'w') as json_f:
             json.dump(self.report_structure, json_f, indent=4)
         print(f"{G}[+] Structure saved to JSON Database: {self.filename}{RESET}")
         print(f"{G}[+] Full log logs pushed to Text History: {self.log_file}{RESET}")
-
 # --- THE 100 COMMANDS MONOLITHIC DATABASE ---
 cmd_list = {
     "1": ("nmap -sS -Pn {t}", "Stealth SYN Scan: Executes half-open connection probing without completing handshakes."),
